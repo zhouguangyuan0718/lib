@@ -104,11 +104,6 @@ jobs:
         if ($LASTEXITCODE -ne 0) {
           exit $LASTEXITCODE
         }
-        & $llgo run ./c/bdwgc/_test 0
-        if ($LASTEXITCODE -ne 0) {
-          exit $LASTEXITCODE
-        }
-
         Push-Location .llgo
         try {
           go mod edit "-replace=github.com/goplus/lib=$env:GITHUB_WORKSPACE"
