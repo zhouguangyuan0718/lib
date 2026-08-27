@@ -25,7 +25,14 @@ jobs:
       run: go build -v ./...
 
   llgo-test:
-    runs-on: ubuntu-latest
+    name: llgo-test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - macos-latest
     steps:
     - uses: actions/checkout@v4
 
