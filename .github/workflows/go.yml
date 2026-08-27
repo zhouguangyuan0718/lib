@@ -104,7 +104,7 @@ jobs:
         if ($LASTEXITCODE -ne 0) {
           exit $LASTEXITCODE
         }
-        Push-Location .llgo
+        Push-Location .llgo/_demo/c
         try {
           go mod edit "-replace=github.com/goplus/lib=$env:GITHUB_WORKSPACE"
           foreach ($demo in @(
@@ -117,7 +117,7 @@ jobs:
             "thread"
           )) {
             Write-Host "Running Windows C demo: $demo"
-            & $llgo run "./_demo/c/$demo"
+            & $llgo run "./$demo"
             if ($LASTEXITCODE -ne 0) {
               exit $LASTEXITCODE
             }
