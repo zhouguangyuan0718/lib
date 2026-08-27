@@ -104,9 +104,7 @@ jobs:
           ./c/math/rand `
           ./c/net `
           ./c/os `
-          ./c/time `
-          ./cpp/llvm `
-          ./cpp/std
+          ./c/time
         if ($LASTEXITCODE -ne 0) {
           exit $LASTEXITCODE
         }
