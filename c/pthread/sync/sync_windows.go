@@ -39,7 +39,7 @@ var OnceInit Once
 //go:linkname winOnce C.llgo_win_once
 func winOnce(once *Once, f OnceFunc) c.Int
 
-func (o *Once) Do(f OnceFunc) c.Int { return winOnce(o, f) }
+func (o *Once) DoC(f OnceFunc) c.Int { return winOnce(o, f) }
 
 type MutexType c.Int
 

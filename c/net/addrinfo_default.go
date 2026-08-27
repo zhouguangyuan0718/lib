@@ -26,5 +26,12 @@ type AddrInfo struct {
 //go:linkname Getaddrinfo C.getaddrinfo
 func Getaddrinfo(host *c.Char, port *c.Char, addrInfo *AddrInfo, result **AddrInfo) c.Int
 
-//go:linkname Freeaddrinfo C.freeaddrinfo
-func Freeaddrinfo(addrInfo *AddrInfo)
+//go:linkname freeaddrinfo C.freeaddrinfo
+func freeaddrinfo(addrInfo *AddrInfo)
+
+// Freeaddrinfo retains the package's original result for source compatibility.
+// The C function returns void, so a completed call reports zero.
+func Freeaddrinfo(addrInfo *AddrInfo) c.Int {
+	freeaddrinfo(addrInfo)
+	return 0
+}

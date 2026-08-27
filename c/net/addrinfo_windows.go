@@ -26,5 +26,12 @@ type AddrInfo struct {
 //go:linkname Getaddrinfo C.llgo_net_getaddrinfo
 func Getaddrinfo(host *c.Char, port *c.Char, addrInfo *AddrInfo, result **AddrInfo) c.Int
 
-//go:linkname Freeaddrinfo C.llgo_net_freeaddrinfo
-func Freeaddrinfo(addrInfo *AddrInfo)
+//go:linkname freeaddrinfo C.llgo_net_freeaddrinfo
+func freeaddrinfo(addrInfo *AddrInfo)
+
+// Freeaddrinfo matches the existing cross-platform API. The native function
+// returns void, so a completed call reports zero.
+func Freeaddrinfo(addrInfo *AddrInfo) c.Int {
+	freeaddrinfo(addrInfo)
+	return 0
+}

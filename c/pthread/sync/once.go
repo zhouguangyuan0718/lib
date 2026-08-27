@@ -22,7 +22,7 @@ import (
 	"github.com/goplus/lib/c"
 )
 
-// OnceFunc is a native C callback accepted by Once.Do. It cannot carry a Go
+// OnceFunc is a native C callback accepted by Once.DoC. It cannot carry a Go
 // closure environment; use Once.DoFunc or the Go sync.Once type when the
 // callback captures values.
 //
@@ -40,8 +40,16 @@ func invokeOnceContext(data c.Pointer) {
 	(*onceContext)(data).fn()
 }
 
+// Do preserves the package's original method signature. It keeps f above the
+// C ABI boundary, so existing callers can continue to pass ordinary Go
+// functions and closures. Use DoC when a native C callback is already
+// available and the adapter is unnecessary.
+func (o *Once) Do(f func()) c.Int {
+	return o.DoFunc(f)
+}
+
 // DoFunc invokes f once while keeping its Go closure environment above the C
-// ABI boundary. Code that does not need a closure should use Do directly.
+// ABI boundary. Code that already has a native callback can use DoC directly.
 func (o *Once) DoFunc(f func()) c.Int {
 	context := &onceContext{fn: f}
 	result := doOnceContext(o, invokeOnceContext, c.Pointer(context))

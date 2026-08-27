@@ -41,8 +41,8 @@ type Once C.pthread_once_t
 //go:linkname OnceInit llgoSyncOnceInitVal
 var OnceInit Once
 
-// llgo:link (*Once).Do C.pthread_once
-func (o *Once) Do(f OnceFunc) c.Int { return 0 }
+// llgo:link (*Once).DoC C.pthread_once
+func (o *Once) DoC(f OnceFunc) c.Int { return 0 }
 
 // -----------------------------------------------------------------------------
 

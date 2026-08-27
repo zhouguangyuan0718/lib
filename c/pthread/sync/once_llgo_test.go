@@ -22,6 +22,7 @@ import (
 	stdsync "sync"
 	"testing"
 
+	"github.com/goplus/lib/c"
 	llsync "github.com/goplus/lib/c/pthread/sync"
 )
 
@@ -38,18 +39,35 @@ func incrementRawOnceCount() {
 	rawOnceCount++
 }
 
-func TestOnceDoRawCallback(t *testing.T) {
+func TestOnceDoCRawCallback(t *testing.T) {
 	once := llsync.OnceInit
 	rawOnceCount, rawOnceDelta = 0, 2
 
-	if result := once.Do(addRawOnceDelta); result != 0 {
-		t.Fatalf("first Once.Do returned %d", result)
+	if result := once.DoC(addRawOnceDelta); result != 0 {
+		t.Fatalf("first Once.DoC returned %d", result)
 	}
-	if result := once.Do(incrementRawOnceCount); result != 0 {
-		t.Fatalf("second Once.Do returned %d", result)
+	if result := once.DoC(incrementRawOnceCount); result != 0 {
+		t.Fatalf("second Once.DoC returned %d", result)
 	}
 	if rawOnceCount != 2 {
 		t.Fatalf("raw callback ran incorrectly: got %d, want 2", rawOnceCount)
+	}
+}
+
+type onceDoer interface {
+	Do(func()) c.Int
+}
+
+var _ onceDoer = (*llsync.Once)(nil)
+
+func TestOnceDoCompatibility(t *testing.T) {
+	once := llsync.OnceInit
+	count, delta := 0, 2
+	if result := once.Do(func() { count += delta }); result != 0 {
+		t.Fatalf("Once.Do returned %d", result)
+	}
+	if count != 2 {
+		t.Fatalf("Once.Do callback ran incorrectly: got %d, want 2", count)
 	}
 }
 
