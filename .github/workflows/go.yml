@@ -59,9 +59,11 @@ jobs:
       working-directory: .llgo
       run: go build -tags=dev -o "$RUNNER_TEMP/llgo" ./cmd/llgo
 
-    - name: Test LLGo synchronization bindings
+    - name: Test LLGo native bindings
       env:
         LLGO_BUILD_CACHE: 'off'
         LLGO_ROOT: ${{ github.workspace }}/.llgo
       run: |
         "$RUNNER_TEMP/llgo" test -v ./c/pthread/sync
+        "$RUNNER_TEMP/llgo" test -v ./cpp/llvm
+        "$RUNNER_TEMP/llgo" run ./c/bdwgc/_test 0
