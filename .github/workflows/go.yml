@@ -43,7 +43,9 @@ jobs:
         go-version: '1.26.7'
 
     # Windows test execution became available through LLGo R6. Build current
-    # LLGo main independently of this module, then exercise this PR checkout.
+    # LLGo main independently of this module, then exercise only the basic C
+    # bindings available at that stage. Later LLGo stages expand this lane to
+    # the full synchronization and C++ ABI surface.
     - name: Check out LLGo
       uses: actions/checkout@v4
       with:
@@ -98,7 +100,7 @@ jobs:
         $ErrorActionPreference = "Stop"
         $llgo = Join-Path $env:RUNNER_TEMP "llgo.exe"
 
-        & $llgo test -count=1 -v ./c/net ./c/pthread/sync ./cpp/llvm
+        & $llgo test -count=1 -v ./c/net
         if ($LASTEXITCODE -ne 0) {
           exit $LASTEXITCODE
         }
@@ -117,9 +119,7 @@ jobs:
             "getcwd",
             "setjmp",
             "netdbdemo",
-            "thread",
-            "syncdebug",
-            "cppstr"
+            "thread"
           )) {
             Write-Host "Running Windows C demo: $demo"
             & $llgo run "./_demo/c/$demo"
