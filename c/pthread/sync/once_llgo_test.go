@@ -19,8 +19,10 @@
 package sync_test
 
 import (
+	"runtime"
 	stdsync "sync"
 	"testing"
+	"time"
 
 	"github.com/goplus/lib/c"
 	llsync "github.com/goplus/lib/c/pthread/sync"
@@ -129,5 +131,107 @@ func TestOnceDoFuncNested(t *testing.T) {
 	}
 	if value != 5 {
 		t.Fatalf("nested context ran incorrectly: got %d, want 5", value)
+	}
+}
+
+func TestMutexAndRWLock(t *testing.T) {
+	var mutex llsync.Mutex
+	if result := mutex.Init(nil); result != 0 {
+		t.Fatalf("Mutex.Init returned %d", result)
+	}
+	defer mutex.Destroy()
+	mutex.Lock()
+	mutex.Unlock()
+	if result := mutex.TryLock(); result != 0 {
+		t.Fatalf("Mutex.TryLock returned %d", result)
+	}
+	mutex.Unlock()
+
+	var rw llsync.RWLock
+	if result := rw.Init(nil); result != 0 {
+		t.Fatalf("RWLock.Init returned %d", result)
+	}
+	defer rw.Destroy()
+	if result := rw.TryRLock(); result != 0 {
+		t.Fatalf("RWLock.TryRLock returned %d", result)
+	}
+	rw.RUnlock()
+	if result := rw.TryLock(); result != 0 {
+		t.Fatalf("RWLock.TryLock returned %d", result)
+	}
+	rw.Unlock()
+}
+
+func TestCondSignal(t *testing.T) {
+	var mutex llsync.Mutex
+	if result := mutex.Init(nil); result != 0 {
+		t.Fatalf("Mutex.Init returned %d", result)
+	}
+	defer mutex.Destroy()
+
+	var cond llsync.Cond
+	if result := cond.Init(nil); result != 0 {
+		t.Fatalf("Cond.Init returned %d", result)
+	}
+	defer cond.Destroy()
+
+	waiting := make(chan struct{})
+	done := make(chan c.Int, 1)
+	go func() {
+		mutex.Lock()
+		close(waiting)
+		result := cond.Wait(&mutex)
+		mutex.Unlock()
+		done <- result
+	}()
+
+	<-waiting
+	mutex.Lock()
+	result := cond.Signal()
+	mutex.Unlock()
+	if result != 0 {
+		t.Fatalf("Cond.Signal returned %d", result)
+	}
+
+	select {
+	case result := <-done:
+		if result != 0 {
+			t.Fatalf("Cond.Wait returned %d", result)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Cond.Wait did not wake after Cond.Signal")
+	}
+}
+
+func TestSemaphore(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("macOS does not implement unnamed POSIX semaphores")
+	}
+
+	var sem llsync.Sem
+	if result := sem.Init(0, 1); result != 0 {
+		t.Fatalf("Sem.Init returned %d", result)
+	}
+	defer func() {
+		if result := sem.Destroy(); result != 0 {
+			t.Errorf("Sem.Destroy returned %d", result)
+		}
+	}()
+
+	var value c.Int
+	if result := sem.GetValue(&value); result != 0 || value != 1 {
+		t.Fatalf("Sem.GetValue = (%d, %d), want (0, 1)", result, value)
+	}
+	if result := sem.TryWait(); result != 0 {
+		t.Fatalf("Sem.TryWait returned %d", result)
+	}
+	if result := sem.TryWait(); result == 0 {
+		t.Fatal("Sem.TryWait succeeded with no available value")
+	}
+	if result := sem.Post(); result != 0 {
+		t.Fatalf("Sem.Post returned %d", result)
+	}
+	if result := sem.Wait(); result != 0 {
+		t.Fatalf("Sem.Wait returned %d", result)
 	}
 }
