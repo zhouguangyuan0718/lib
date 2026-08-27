@@ -33,6 +33,7 @@ jobs:
         os:
         - ubuntu-latest
         - macos-latest
+        - windows-2022
     steps:
     - uses: actions/checkout@v4
 
@@ -41,13 +42,13 @@ jobs:
       with:
         go-version: '1.26.7'
 
-    # Build a released LLGo toolchain independently of this module. The test
-    # command below still resolves github.com/goplus/lib from this PR checkout.
+    # Windows test execution became available through LLGo R6. Build current
+    # LLGo main independently of this module, then exercise this PR checkout.
     - name: Check out LLGo
       uses: actions/checkout@v4
       with:
         repository: xgo-dev/llgo
-        ref: v1.0.0
+        ref: main
         path: .llgo
 
     - name: Set up LLGo dependencies
@@ -56,10 +57,12 @@ jobs:
         llvm-version: '19'
 
     - name: Build LLGo
+      if: runner.os != 'Windows'
       working-directory: .llgo
       run: go build -tags=dev -o "$RUNNER_TEMP/llgo" ./cmd/llgo
 
     - name: Test LLGo native bindings
+      if: runner.os != 'Windows'
       env:
         LLGO_BUILD_CACHE: 'off'
         LLGO_ROOT: ${{ github.workspace }}/.llgo
@@ -67,9 +70,9 @@ jobs:
         "$RUNNER_TEMP/llgo" test -v ./c/pthread/sync
         "$RUNNER_TEMP/llgo" run ./c/bdwgc/_test 0
 
-    # The non-Windows binding intentionally exposes libc++'s C++ ABI and is
-    # therefore exercised on macOS. Windows uses the stable C bridge covered
-    # by the staged LLGo integration; Linux LLVM packages use libstdc++.
+    # The Unix binding exposes libc++'s C++ ABI and is therefore exercised on
+    # macOS. Linux LLVM packages use libstdc++; Windows is tested below through
+    # its stable C bridge.
     - name: Test LLGo LLVM demangle bindings
       if: runner.os == 'macOS'
       env:
@@ -77,3 +80,53 @@ jobs:
         LLGO_ROOT: ${{ github.workspace }}/.llgo
       run: |
         "$RUNNER_TEMP/llgo" test -v ./cpp/llvm
+
+    - name: Build LLGo on Windows
+      if: runner.os == 'Windows'
+      working-directory: .llgo
+      shell: pwsh
+      run: go build -tags=dev -o "$env:RUNNER_TEMP\llgo.exe" ./cmd/llgo
+
+    - name: Test LLGo Windows bindings and demos
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        LLGO_BUILD_CACHE: 'off'
+        LLGO_REQUIRE_MSVC: '1'
+        LLGO_ROOT: ${{ github.workspace }}/.llgo
+      run: |
+        $ErrorActionPreference = "Stop"
+        $llgo = Join-Path $env:RUNNER_TEMP "llgo.exe"
+
+        & $llgo test -count=1 -v ./c/net ./c/pthread/sync ./cpp/llvm
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+        & $llgo run ./c/bdwgc/_test 0
+        if ($LASTEXITCODE -ne 0) {
+          exit $LASTEXITCODE
+        }
+
+        Push-Location .llgo
+        try {
+          go mod edit "-replace=github.com/goplus/lib=$env:GITHUB_WORKSPACE"
+          foreach ($demo in @(
+            "hello",
+            "crand",
+            "ctime",
+            "getcwd",
+            "setjmp",
+            "netdbdemo",
+            "thread",
+            "syncdebug",
+            "cppstr"
+          )) {
+            Write-Host "Running Windows C demo: $demo"
+            & $llgo run "./_demo/c/$demo"
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+            }
+          }
+        } finally {
+          Pop-Location
+        }
