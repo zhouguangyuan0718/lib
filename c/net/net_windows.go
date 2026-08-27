@@ -18,23 +18,23 @@
 
 package net
 
-import (
-	_ "unsafe"
+import "github.com/goplus/lib/c"
 
-	"github.com/goplus/lib/c"
-)
-
-const (
-	LLGoPackage = "link: -lws2_32"
-	LLGoFiles   = "_wrap/net_windows.c"
-)
+const LLGoPackage = "link: -lws2_32"
 
 type (
 	SocketT  = uintptr
 	SocklenT = c.Int
 )
 
-const InvalidSocket SocketT = ^SocketT(0)
+const (
+	InvalidSocket SocketT = ^SocketT(0)
+	SocketError           = -1
+)
+
+func MakeWord(low, high byte) uint16 {
+	return uint16(low) | uint16(high)<<8
+}
 
 const (
 	AF_UNSPEC    = 0
@@ -115,54 +115,3 @@ type Hostent struct {
 	Length   int16
 	AddrList **c.Char
 }
-
-//go:linkname Socket C.llgo_net_socket
-func Socket(domain c.Int, typ c.Int, protocol c.Int) SocketT
-
-//go:linkname Bind C.llgo_net_bind
-func Bind(sockfd SocketT, addr *SockaddrIn, addrlen SocklenT) c.Int
-
-//go:linkname Connect C.llgo_net_connect
-func Connect(sockfd SocketT, addr *SockAddr, addrlen SocklenT) c.Int
-
-//go:linkname Listen C.llgo_net_listen
-func Listen(sockfd SocketT, backlog c.Int) c.Int
-
-//go:linkname Accept C.llgo_net_accept
-func Accept(sockfd SocketT, addr *SockaddrIn, addrlen *SocklenT) SocketT
-
-//go:linkname Close C.llgo_net_close
-func Close(sockfd SocketT) c.Int
-
-//go:linkname GetHostByName C.llgo_net_gethostbyname
-func GetHostByName(name *c.Char) *Hostent
-
-//go:linkname InetNtop C.llgo_net_inet_ntop
-func InetNtop(af c.Int, src c.Pointer, dst *c.Char, size uintptr) *c.Char
-
-//go:linkname InetAddr C.llgo_net_inet_addr
-func InetAddr(value *c.Char) c.Uint
-
-//go:linkname Send C.llgo_net_send
-func Send(sockfd SocketT, buffer c.Pointer, length uintptr, flags c.Int) c.Long
-
-//go:linkname Recv C.llgo_net_recv
-func Recv(sockfd SocketT, buffer c.Pointer, length uintptr, flags c.Int) c.Long
-
-//go:linkname SetSockOpt C.llgo_net_setsockopt
-func SetSockOpt(sockfd SocketT, level c.Int, optionName c.Int, optionValue c.Pointer, optionLength SocklenT) c.Int
-
-//go:linkname Ntohs C.ntohs
-func Ntohs(value uint16) uint16
-
-//go:linkname Htons C.htons
-func Htons(value uint16) uint16
-
-//go:linkname Ntohl C.ntohl
-func Ntohl(value c.Uint) c.Uint
-
-//go:linkname Htonl C.htonl
-func Htonl(value c.Uint) c.Uint
-
-//go:linkname LastError C.WSAGetLastError
-func LastError() c.Int

@@ -16,13 +16,16 @@
  * limitations under the License.
  */
 
-package sync
+package syscall
 
-import (
-	_ "unsafe"
+const LLGoPackage = "noinit"
 
-	"github.com/goplus/lib/c"
+type Errno = uintptr
+
+// A Signal is a number describing a process signal.
+type Signal = int
+
+const (
+	ERROR_FILE_NOT_FOUND Errno = 2
+	ERROR_PATH_NOT_FOUND Errno = 3
 )
-
-//go:linkname doOnceContext C.llgo_win_once_context
-func doOnceContext(once *Once, callback onceContextFunc, data c.Pointer) c.Int

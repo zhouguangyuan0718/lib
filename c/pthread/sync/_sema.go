@@ -1,5 +1,3 @@
-//go:build !windows
-
 /*
  * Copyright (c) 2024 The GoPlus Authors (goplus.org). All rights reserved.
  *
@@ -27,7 +25,7 @@ import (
 	"github.com/goplus/lib/c"
 )
 
-// Sem represents a POSIX semaphore.
+// Sem represents a semaphore.
 type Sem C.sem_t
 
 // initializes the unnamed semaphore at the address

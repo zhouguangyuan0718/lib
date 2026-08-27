@@ -24,12 +24,9 @@ import (
 	"github.com/goplus/lib/c"
 )
 
-type (
-	SocketT  = c.Int
-	SocklenT = c.Uint
+const (
+	LLGoPackage = true
 )
-
-const InvalidSocket SocketT = -1
 
 const (
 	AF_UNSPEC          = 0       // unspecified
@@ -174,9 +171,6 @@ func Listen(sockfd c.Int, backlog c.Int) c.Int
 //go:linkname Accept C.accept
 func Accept(sockfd c.Int, addr *SockaddrIn, addrlen *c.Uint) c.Int
 
-//go:linkname Close C.close
-func Close(sockfd c.Int) c.Int
-
 //go:linkname GetHostByName C.gethostbyname
 func GetHostByName(name *c.Char) *Hostent
 
@@ -208,5 +202,24 @@ func Ntohl(x c.Uint) c.Uint
 
 //go:linkname Htonl C.htonl
 func Htonl(x c.Uint) c.Uint
+
+// -----------------------------------------------------------------------------
+
+type AddrInfo struct {
+	Flags     c.Int
+	Family    c.Int
+	SockType  c.Int
+	Protocol  c.Int
+	AddrLen   c.Uint
+	CanOnName *c.Char
+	Addr      *SockAddr
+	Next      *AddrInfo
+}
+
+//go:linkname Getaddrinfo C.getaddrinfo
+func Getaddrinfo(host *c.Char, port *c.Char, addrInfo *AddrInfo, result **AddrInfo) c.Int
+
+//go:linkname Freeaddrinfo C.freeaddrinfo
+func Freeaddrinfo(addrInfo *AddrInfo)
 
 // -----------------------------------------------------------------------------

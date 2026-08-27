@@ -15,6 +15,9 @@
 
 package setjmp
 
+// #include <setjmp.h>
+import "C"
+
 import (
 	_ "unsafe"
 
@@ -23,23 +26,14 @@ import (
 
 const LLGoPackage = "decl"
 
-// MSVC exposes jmp_buf as an opaque, pointer-aligned array. Reserve more than
-// the current AMD64 and ARM64 layouts so the public Go type remains usable
-// across both Windows architectures without copying private CRT definitions.
-type JmpBuf [32]uintptr
-type SigjmpBuf = JmpBuf
+type JmpBuf = C.jmp_buf
+
+// Windows has no signal-mask variant of setjmp. These LLGo intrinsics lower
+// at the caller, which is required because setjmp cannot safely be hidden in a
+// wrapper frame that returns before longjmp restores it.
 
 //go:linkname Setjmp llgo.setjmp
 func Setjmp(env *JmpBuf) c.Int
 
 //go:linkname Longjmp llgo.longjmp
 func Longjmp(env *JmpBuf, val c.Int)
-
-// Windows has no signal mask to preserve. LLGo lowers these intrinsics to the
-// architecture-specific Windows context save/restore pair used by its runtime.
-//
-//go:linkname Sigsetjmp llgo.sigsetjmp
-func Sigsetjmp(env *SigjmpBuf, savemask c.Int) c.Int
-
-//go:linkname Siglongjmp llgo.siglongjmp
-func Siglongjmp(env *SigjmpBuf, val c.Int)

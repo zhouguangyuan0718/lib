@@ -43,9 +43,8 @@ jobs:
         go-version: '1.26.7'
 
     # Windows test execution became available through LLGo R6. Build current
-    # LLGo main independently of this module, then exercise only the basic C
-    # bindings available at that stage. Later LLGo stages expand this lane to
-    # the full synchronization and C++ ABI surface.
+    # LLGo main independently of this module, then exercise the native Windows
+    # C bindings available at that stage. pthread remains POSIX-only.
     - name: Check out LLGo
       uses: actions/checkout@v4
       with:
@@ -69,7 +68,7 @@ jobs:
         LLGO_BUILD_CACHE: 'off'
         LLGO_ROOT: ${{ github.workspace }}/.llgo
       run: |
-        "$RUNNER_TEMP/llgo" test -v ./c/pthread/sync
+        "$RUNNER_TEMP/llgo" test -v ./c/pthread ./c/pthread/sync ./c/time ./cpp/std
         "$RUNNER_TEMP/llgo" run ./c/bdwgc/_test 0
 
     # The Unix binding exposes libc++'s C++ ABI and is therefore exercised on
@@ -89,7 +88,7 @@ jobs:
       shell: pwsh
       run: go build -tags=dev -o "$env:RUNNER_TEMP\llgo.exe" ./cmd/llgo
 
-    - name: Test LLGo Windows bindings and demos
+    - name: Test LLGo Windows bindings
       if: runner.os == 'Windows'
       shell: pwsh
       env:
@@ -100,28 +99,14 @@ jobs:
         $ErrorActionPreference = "Stop"
         $llgo = Join-Path $env:RUNNER_TEMP "llgo.exe"
 
-        & $llgo test -count=1 -v ./c/net
+        & $llgo test -count=1 -v `
+          ./c `
+          ./c/math/rand `
+          ./c/net `
+          ./c/os `
+          ./c/time `
+          ./cpp/llvm `
+          ./cpp/std
         if ($LASTEXITCODE -ne 0) {
           exit $LASTEXITCODE
-        }
-        Push-Location .llgo/_demo/c
-        try {
-          go mod edit "-replace=github.com/goplus/lib=$env:GITHUB_WORKSPACE"
-          foreach ($demo in @(
-            "hello",
-            "crand",
-            "ctime",
-            "getcwd",
-            "setjmp",
-            "netdbdemo",
-            "thread"
-          )) {
-            Write-Host "Running Windows C demo: $demo"
-            & $llgo run "./$demo"
-            if ($LASTEXITCODE -ne 0) {
-              exit $LASTEXITCODE
-            }
-          }
-        } finally {
-          Pop-Location
         }

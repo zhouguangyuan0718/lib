@@ -24,10 +24,7 @@ import (
 	"github.com/goplus/lib/c"
 )
 
-const (
-	LLGoPackage = "link"
-	LLGoFiles   = "_wrap/time_windows.c"
-)
+const LLGoPackage = "link"
 
 type TimeT int64
 
@@ -45,52 +42,28 @@ type Tm struct {
 	Isdst c.Int
 }
 
-//go:linkname Time C.llgo_time
+//go:linkname Time C._time64
 func Time(timer *TimeT) TimeT
 
-//go:linkname Mktime C.llgo_mktime
+//go:linkname Mktime C._mktime64
 func Mktime(timer *Tm) TimeT
 
-//go:linkname Ctime C.llgo_ctime
-func Ctime(timer *TimeT) string
+//go:linkname Ctime C._ctime64
+func Ctime(timer *TimeT) *c.Char
 
-//go:linkname Difftime C.llgo_difftime
+//go:linkname Difftime C._difftime64
 func Difftime(end, start TimeT) float64
 
-//go:linkname Gmtime C.llgo_gmtime
+//go:linkname Gmtime C._gmtime64
 func Gmtime(timer *TimeT) *Tm
 
-//go:linkname Localtime C.llgo_localtime
+//go:linkname Localtime C._localtime64
 func Localtime(timer *TimeT) *Tm
 
-//go:linkname Strftime C.llgo_strftime
+//go:linkname Strftime C.strftime
 func Strftime(buf *c.Char, bufSize uintptr, format *c.Char, timeptr *Tm) uintptr
 
 type ClockT c.Long
 
-//go:linkname Clock C.llgo_clock
+//go:linkname Clock C.clock
 func Clock() ClockT
-
-type ClockidT c.Int
-
-const (
-	CLOCK_REALTIME           ClockidT = 0
-	CLOCK_MONOTONIC          ClockidT = 1
-	CLOCK_PROCESS_CPUTIME_ID ClockidT = 2
-	CLOCK_THREAD_CPUTIME_ID  ClockidT = 3
-	CLOCK_MONOTONIC_RAW      ClockidT = 4
-)
-
-type Timespec struct {
-	Sec  TimeT
-	Nsec c.Long
-}
-
-//go:linkname ClockGettime C.llgo_clock_gettime
-func ClockGettime(clkID ClockidT, tp *Timespec) c.Int
-
-//go:linkname ClockSettime C.llgo_clock_settime
-func ClockSettime(clkID ClockidT, tp *Timespec) c.Int
-
-//go:linkname ClockGetres C.llgo_clock_getres
-func ClockGetres(clkID ClockidT, res *Timespec) c.Int

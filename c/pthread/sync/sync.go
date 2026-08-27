@@ -38,11 +38,16 @@ const (
 // Once is an object that will perform exactly one action.
 type Once C.pthread_once_t
 
+// OnceFunc is the C callback type accepted by pthread_once.
+//
+//llgo:type C
+type OnceFunc func()
+
 //go:linkname OnceInit llgoSyncOnceInitVal
 var OnceInit Once
 
-// llgo:link (*Once).DoC C.pthread_once
-func (o *Once) DoC(f OnceFunc) c.Int { return 0 }
+// llgo:link (*Once).Do C.pthread_once
+func (o *Once) Do(f OnceFunc) c.Int { return 0 }
 
 // -----------------------------------------------------------------------------
 

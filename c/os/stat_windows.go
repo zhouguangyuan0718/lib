@@ -15,20 +15,22 @@
 
 package os
 
+// #include <sys/stat.h>
+// typedef struct _stat64 llgo_stat64;
+import "C"
+
 import (
 	_ "unsafe"
 
 	"github.com/goplus/lib/c"
 )
 
+// StatT preserves the target UCRT's struct _stat64 size, field offsets, and
+// alignment, including its 8-byte alignment on Windows/386.
+type StatT = C.llgo_stat64
+
 //go:linkname Stat C._stat64
 func Stat(path *c.Char, buf *StatT) c.Int
-
-// The Universal CRT has no lstat variant. Its stat operation exposes the
-// portable Windows file metadata available through StatT.
-//
-//go:linkname Lstat C._stat64
-func Lstat(path *c.Char, buf *StatT) c.Int
 
 //go:linkname Fstat C._fstat64
 func Fstat(fd c.Int, buf *StatT) c.Int

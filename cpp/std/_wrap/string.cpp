@@ -9,6 +9,13 @@
 #include <string>
 #include <new>
 
+#if defined(_WIN32) && defined(_MSC_VER)
+static_assert(sizeof(std::string) == 16 + 2 * sizeof(void *),
+              "unexpected MSVC std::string layout");
+static_assert(alignof(std::string) == alignof(void *),
+              "unexpected MSVC std::string alignment");
+#endif
+
 extern "C" {
 
 // -----------------------------------------------------------------------------

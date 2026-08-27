@@ -27,6 +27,7 @@ func TestWinsockLayouts(t *testing.T) {
 		{"AddrInfo.CanOnName", unsafe.Offsetof(AddrInfo{}.CanOnName), 16 + ptrSize},
 		{"AddrInfo.Addr", unsafe.Offsetof(AddrInfo{}.Addr), 16 + 2*ptrSize},
 		{"AddrInfo.Next", unsafe.Offsetof(AddrInfo{}.Next), 16 + 3*ptrSize},
+		{"WSAData", unsafe.Sizeof(WSAData{}), wsaDataSize},
 	}
 	for _, test := range tests {
 		if test.got != test.want {

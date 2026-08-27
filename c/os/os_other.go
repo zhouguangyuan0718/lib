@@ -29,7 +29,9 @@ const (
 	LLGoPackage = "link"
 )
 
-const PATH_MAX = 4096
+const (
+	PATH_MAX = 4096
+)
 
 type (
 	ModeT uint32
