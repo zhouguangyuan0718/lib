@@ -23,3 +23,38 @@ jobs:
 
     - name: Build
       run: go build -v ./...
+
+  llgo-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.26.7'
+
+    # Build a released LLGo toolchain independently of this module. The test
+    # command below still resolves github.com/goplus/lib from this PR checkout.
+    - name: Check out LLGo
+      uses: actions/checkout@v4
+      with:
+        repository: xgo-dev/llgo
+        ref: v1.0.0
+        path: .llgo
+
+    - name: Set up LLGo dependencies
+      uses: ./.llgo/.github/actions/setup-deps
+      with:
+        llvm-version: '19'
+
+    - name: Build LLGo
+      working-directory: .llgo
+      run: go build -tags=dev -o "$RUNNER_TEMP/llgo" ./cmd/llgo
+
+    - name: Test LLGo synchronization bindings
+      env:
+        LLGO_BUILD_CACHE: 'off'
+        LLGO_ROOT: ${{ github.workspace }}/.llgo
+      run: |
+        "$RUNNER_TEMP/llgo" test -v ./c/pthread/sync
