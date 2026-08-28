@@ -42,14 +42,13 @@ jobs:
       with:
         go-version: '1.26.7'
 
-    # Windows test execution became available through LLGo R6. Build current
-    # LLGo main independently of this module, then exercise the native Windows
-    # C bindings available at that stage. pthread remains POSIX-only.
+    # Use the stdcall contribution until it lands on LLGo main. This lets the
+    # Windows job exercise the native Winsock declarations without C wrappers.
     - name: Check out LLGo
       uses: actions/checkout@v4
       with:
-        repository: xgo-dev/llgo
-        ref: main
+        repository: cpunion/llgo
+        ref: 7c15c3b0845c1ff338c7cf369669e74b704c6256
         path: .llgo
 
     - name: Set up LLGo dependencies
